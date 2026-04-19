@@ -109,28 +109,39 @@ const App = () => {
       setTweaks(tweaksSnap.exists ? {...DEFAULT_TWEAKS, ...tweaksSnap.data()} : DEFAULT_TWEAKS);
       setRoute(routeSnap.exists   ? routeSnap.data()        : {view: 'library'});
       setDataLoaded(true);
+    }).catch(function(err) {
+      console.error('Firestore load failed:', err);
+      setDishes(window.SEED_DISHES);
+      setPantry(window.SEED_PANTRY);
+      setTweaks(DEFAULT_TWEAKS);
+      setRoute({view: 'library'});
+      setDataLoaded(true);
     });
   }, [uid]);
 
   // ── Persist to Firestore when state changes (after initial load) ───────────
   useEffect(() => {
     if (!uid || !dataLoaded) return;
-    window.db.doc('users/' + uid + '/dishes').set({ items: dishes });
+    window.db.doc('users/' + uid + '/dishes').set({ items: dishes })
+      .catch(err => console.error('Failed to save dishes:', err));
   }, [dishes, uid, dataLoaded]);
 
   useEffect(() => {
     if (!uid || !dataLoaded) return;
-    window.db.doc('users/' + uid + '/pantry').set({ items: pantry });
+    window.db.doc('users/' + uid + '/pantry').set({ items: pantry })
+      .catch(err => console.error('Failed to save pantry:', err));
   }, [pantry, uid, dataLoaded]);
 
   useEffect(() => {
     if (!uid || !dataLoaded) return;
-    window.db.doc('users/' + uid + '/tweaks').set(tweaks);
+    window.db.doc('users/' + uid + '/tweaks').set(tweaks)
+      .catch(err => console.error('Failed to save tweaks:', err));
   }, [tweaks, uid, dataLoaded]);
 
   useEffect(() => {
     if (!uid || !dataLoaded) return;
-    window.db.doc('users/' + uid + '/route').set(route);
+    window.db.doc('users/' + uid + '/route').set(route)
+      .catch(err => console.error('Failed to save route:', err));
   }, [route, uid, dataLoaded]);
 
   // ── Apply theme / accent / font / density to root ─────────────────────────
