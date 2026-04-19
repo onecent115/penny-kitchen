@@ -1,5 +1,5 @@
 // Add / edit dish editor
-const Editor = ({ dish, isNew, onSave, onCancel }) => {
+const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
   const [method, setMethod] = React.useState(isNew ? null : 'manual');
   const [d, setD] = React.useState(dish || {
     id: 'd' + Date.now(),
@@ -13,8 +13,28 @@ const Editor = ({ dish, isNew, onSave, onCancel }) => {
   const [tab, setTab] = React.useState('ingredients');
   const [tagInput, setTagInput] = React.useState('');
   const [pasteInput, setPasteInput] = React.useState('');
+  const [uploading, setUploading] = React.useState(false);
+  const fileInputRef = React.useRef(null);
 
   const update = (patch) => setD(prev => ({...prev, ...patch}));
+
+  const handleImageFile = (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    setUploading(true);
+    const ext = file.name.split('.').pop();
+    const path = 'users/' + uid + '/dish-photos/' + d.id + '-' + Date.now() + '.' + ext;
+    const ref = window.store.ref(path);
+    ref.put(file).then(function(snap) {
+      return snap.ref.getDownloadURL();
+    }).then(function(url) {
+      update({ heroPhoto: url });
+      setUploading(false);
+    }).catch(function(err) {
+      console.error('Upload failed:', err);
+      setUploading(false);
+    });
+  };
+
   const updateIng = (i, patch) => {
     const ings = [...d.ingredients];
     ings[i] = { ...ings[i], ...patch };
@@ -199,11 +219,46 @@ const Editor = ({ dish, isNew, onSave, onCancel }) => {
 
       <div className="editor-field">
         <span className="editor-label">Hero image</span>
-        <div className={`image-upload ${d.heroPhoto ? 'has-image' : ''}`}>
-          <Icon name="image" size={32} stroke="var(--ink-3)" />
-          <div style={{fontFamily:'var(--f-mono)', fontSize:12}}>
-            Tap to upload · drag &amp; drop · paste
-          </div>
+        <div
+          className={`image-upload ${d.heroPhoto ? 'has-image' : ''}`}
+          onClick={() => !uploading && fileInputRef.current.click()}
+          onDragOver={e => e.preventDefault()}
+          onDrop={e => { e.preventDefault(); handleImageFile(e.dataTransfer.files[0]); }}
+          style={{cursor: uploading ? 'default' : 'pointer', position:'relative'}}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            style={{display:'none'}}
+            onChange={e => handleImageFile(e.target.files[0])} />
+          {d.heroPhoto ? (
+            <>
+              <img src={d.heroPhoto} alt="Hero"
+                style={{position:'absolute', inset:0, width:'100%', height:'100%',
+                  objectFit:'cover', borderRadius:'inherit'}} />
+              <button
+                onClick={e => { e.stopPropagation(); update({heroPhoto:null}); }}
+                style={{position:'absolute', top:8, right:8, zIndex:1,
+                  background:'rgba(0,0,0,0.5)', border:'none', borderRadius:6,
+                  color:'#fff', padding:'4px 8px', cursor:'pointer', fontSize:12}}>
+                Remove
+              </button>
+            </>
+          ) : uploading ? (
+            <>
+              <Icon name="image" size={32} stroke="var(--ink-3)" />
+              <div style={{fontFamily:'var(--f-mono)', fontSize:12, color:'var(--ink-3)'}}>
+                Uploading…
+              </div>
+            </>
+          ) : (
+            <>
+              <Icon name="image" size={32} stroke="var(--ink-3)" />
+              <div style={{fontFamily:'var(--f-mono)', fontSize:12}}>
+                Tap to upload · drag &amp; drop
+              </div>
+            </>
+          )}
         </div>
       </div>
 
