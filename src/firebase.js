@@ -1,11 +1,11 @@
 (function () {
   var firebaseConfig = {
-    apiKey:            "REPLACE_ME",
-    authDomain:        "REPLACE_ME",
-    projectId:         "REPLACE_ME",
-    storageBucket:     "REPLACE_ME",
-    messagingSenderId: "REPLACE_ME",
-    appId:             "REPLACE_ME"
+    apiKey:            "AIzaSyAxwgHeSG0MFe0AZHFMo9TSisYVaEsSbjs",
+    authDomain:        "penny-s-kitchen.firebaseapp.com",
+    projectId:         "penny-s-kitchen",
+    storageBucket:     "penny-s-kitchen.firebasestorage.app",
+    messagingSenderId: "215104845349",
+    appId:             "1:215104845349:web:dc2680c6d8ff5b56b2f1cc"
   };
   firebase.initializeApp(firebaseConfig);
   window.db    = firebase.firestore();
