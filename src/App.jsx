@@ -99,10 +99,10 @@ const App = () => {
     if (!uid) return;
     setDataLoaded(false);
     Promise.all([
-      window.db.doc('users/' + uid + '/dishes').get(),
-      window.db.doc('users/' + uid + '/pantry').get(),
-      window.db.doc('users/' + uid + '/tweaks').get(),
-      window.db.doc('users/' + uid + '/route').get(),
+      window.db.doc('users/' + uid + '/data/dishes').get(),
+      window.db.doc('users/' + uid + '/data/pantry').get(),
+      window.db.doc('users/' + uid + '/data/tweaks').get(),
+      window.db.doc('users/' + uid + '/data/route').get(),
     ]).then(function([dishSnap, pantrySnap, tweaksSnap, routeSnap]) {
       setDishes(dishSnap.exists   ? dishSnap.data().items   : window.SEED_DISHES);
       setPantry(pantrySnap.exists ? pantrySnap.data().items : window.SEED_PANTRY);
@@ -122,25 +122,25 @@ const App = () => {
   // ── Persist to Firestore when state changes (after initial load) ───────────
   useEffect(() => {
     if (!uid || !dataLoaded) return;
-    window.db.doc('users/' + uid + '/dishes').set({ items: dishes })
+    window.db.doc('users/' + uid + '/data/dishes').set({ items: dishes })
       .catch(err => console.error('Failed to save dishes:', err));
   }, [dishes, uid, dataLoaded]);
 
   useEffect(() => {
     if (!uid || !dataLoaded) return;
-    window.db.doc('users/' + uid + '/pantry').set({ items: pantry })
+    window.db.doc('users/' + uid + '/data/pantry').set({ items: pantry })
       .catch(err => console.error('Failed to save pantry:', err));
   }, [pantry, uid, dataLoaded]);
 
   useEffect(() => {
     if (!uid || !dataLoaded) return;
-    window.db.doc('users/' + uid + '/tweaks').set(tweaks)
+    window.db.doc('users/' + uid + '/data/tweaks').set(tweaks)
       .catch(err => console.error('Failed to save tweaks:', err));
   }, [tweaks, uid, dataLoaded]);
 
   useEffect(() => {
     if (!uid || !dataLoaded) return;
-    window.db.doc('users/' + uid + '/route').set(route)
+    window.db.doc('users/' + uid + '/data/route').set(route)
       .catch(err => console.error('Failed to save route:', err));
   }, [route, uid, dataLoaded]);
 
