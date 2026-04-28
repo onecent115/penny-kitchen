@@ -14,23 +14,35 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
   const [tagInput, setTagInput] = React.useState('');
   const [pasteInput, setPasteInput] = React.useState('');
   const [uploading, setUploading] = React.useState(false);
+  const [uploadError, setUploadError] = React.useState(null);
   const fileInputRef = React.useRef(null);
+  const initialSnapshot = React.useRef(JSON.stringify(d));
 
   const update = (patch) => setD(prev => ({...prev, ...patch}));
+
+  const handleCancel = () => {
+    const dirty = JSON.stringify(d) !== initialSnapshot.current;
+    if (dirty && !confirm('Discard unsaved changes?')) return;
+    onCancel();
+  };
 
   const handleImageFile = (file) => {
     if (!file || !file.type.startsWith('image/')) return;
     setUploading(true);
+    setUploadError(null);
     const ext = file.name.split('.').pop();
     const path = 'users/' + uid + '/dish-photos/' + d.id + '-' + Date.now() + '.' + ext;
     const ref = window.store.ref(path);
     ref.put(file).then(function(snap) {
       return snap.ref.getDownloadURL();
     }).then(function(url) {
+      const oldUrl = d.heroPhoto;
       update({ heroPhoto: url });
+      if (oldUrl) try { window.store.refFromURL(oldUrl).delete().catch(() => {}); } catch(e) {}
       setUploading(false);
     }).catch(function(err) {
       console.error('Upload failed:', err);
+      setUploadError('Upload failed — please try again.');
       setUploading(false);
     });
   };
@@ -42,6 +54,13 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
   };
   const addIng = () => update({ ingredients: [...d.ingredients, {qty:'',unit:'',item:''}] });
   const removeIng = (i) => update({ ingredients: d.ingredients.filter((_, j) => j !== i) });
+  const moveIng = (i, dir) => {
+    const ings = [...d.ingredients];
+    const j = i + dir;
+    if (j < 0 || j >= ings.length) return;
+    [ings[i], ings[j]] = [ings[j], ings[i]];
+    update({ ingredients: ings });
+  };
 
   const updateStep = (i, patch) => {
     const steps = [...d.steps];
@@ -50,6 +69,13 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
   };
   const addStep = () => update({ steps: [...d.steps, {text:'', timer:null}] });
   const removeStep = (i) => update({ steps: d.steps.filter((_, j) => j !== i) });
+  const moveStep = (i, dir) => {
+    const steps = [...d.steps];
+    const j = i + dir;
+    if (j < 0 || j >= steps.length) return;
+    [steps[i], steps[j]] = [steps[j], steps[i]];
+    update({ steps });
+  };
 
   const addTag = () => {
     const t = tagInput.trim().toLowerCase();
@@ -95,13 +121,13 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
     setMethod('manual');
   };
 
-  const canSave = d.name.trim().length > 0;
+  const canSave = d.name.trim().length > 0 && !uploading;
 
   if (isNew && method === null) {
     return (
       <div className="editor">
         <div className="topbar" style={{marginBottom:24}}>
-          <button className="btn-ghost" onClick={onCancel}>
+          <button className="btn-ghost" onClick={handleCancel}>
             <Icon name="chev-left" size={16} /> Cancel
           </button>
         </div>
@@ -200,7 +226,7 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
   return (
     <div className="editor">
       <div className="topbar" style={{marginBottom:24}}>
-        <button className="btn-ghost" onClick={onCancel}>
+        <button className="btn-ghost" onClick={handleCancel}>
           <Icon name="chev-left" size={16} /> Cancel
         </button>
         <div className="spacer" />
@@ -231,13 +257,20 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
             accept="image/*"
             style={{display:'none'}}
             onChange={e => handleImageFile(e.target.files[0])} />
+          {uploadError && (
+            <div style={{position:'absolute', bottom:8, left:8, right:8, zIndex:2,
+              background:'rgba(0,0,0,0.6)', color:'#fff', borderRadius:6,
+              padding:'6px 10px', fontSize:12, fontFamily:'var(--f-mono)'}}>
+              {uploadError}
+            </div>
+          )}
           {d.heroPhoto ? (
             <>
               <img src={d.heroPhoto} alt="Hero"
                 style={{position:'absolute', inset:0, width:'100%', height:'100%',
                   objectFit:'cover', borderRadius:'inherit'}} />
               <button
-                onClick={e => { e.stopPropagation(); update({heroPhoto:null}); }}
+                onClick={e => { e.stopPropagation(); const old = d.heroPhoto; update({heroPhoto:null}); if (old) try { window.store.refFromURL(old).delete().catch(() => {}); } catch(e) {} }}
                 style={{position:'absolute', top:8, right:8, zIndex:1,
                   background:'rgba(0,0,0,0.5)', border:'none', borderRadius:6,
                   color:'#fff', padding:'4px 8px', cursor:'pointer', fontSize:12}}>
@@ -330,6 +363,16 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
               <input value={ing.qty} placeholder="2" onChange={e => updateIng(i,{qty:e.target.value})} />
               <input value={ing.unit} placeholder="cups" onChange={e => updateIng(i,{unit:e.target.value})} />
               <input value={ing.item} placeholder="all-purpose flour" onChange={e => updateIng(i,{item:e.target.value})} />
+              <div style={{display:'flex', flexDirection:'column', gap:1}}>
+                <button className="icon-btn" onClick={() => moveIng(i, -1)} disabled={i === 0}
+                  style={{opacity: i === 0 ? 0.3 : 1, height:16, padding:0}}>
+                  <span style={{display:'inline-block', transform:'rotate(180deg)', lineHeight:0}}><Icon name="chev-down" size={11}/></span>
+                </button>
+                <button className="icon-btn" onClick={() => moveIng(i, 1)} disabled={i === d.ingredients.length - 1}
+                  style={{opacity: i === d.ingredients.length - 1 ? 0.3 : 1, height:16, padding:0}}>
+                  <Icon name="chev-down" size={11}/>
+                </button>
+              </div>
               <button className="icon-btn" onClick={() => removeIng(i)}><Icon name="x" size={14}/></button>
             </div>
           ))}
@@ -362,6 +405,16 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
                   </span>
                 </div>
               </div>
+              <div style={{display:'flex', flexDirection:'column', gap:2}}>
+                <button className="icon-btn" onClick={() => moveStep(i, -1)} disabled={i === 0}
+                  style={{opacity: i === 0 ? 0.3 : 1}}>
+                  <span style={{display:'inline-block', transform:'rotate(180deg)', lineHeight:0}}><Icon name="chev-down" size={14}/></span>
+                </button>
+                <button className="icon-btn" onClick={() => moveStep(i, 1)} disabled={i === d.steps.length - 1}
+                  style={{opacity: i === d.steps.length - 1 ? 0.3 : 1}}>
+                  <Icon name="chev-down" size={14}/>
+                </button>
+              </div>
               <button className="icon-btn" onClick={() => removeStep(i)}><Icon name="x" size={14}/></button>
             </div>
           ))}
@@ -384,12 +437,19 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
       {tab === 'links' && (
         <div>
           {(d.links||[]).map((l, i) => (
-            <div key={i} style={{display:'grid', gridTemplateColumns:'1fr 1fr 32px', gap:8, marginBottom:8}}>
-              <input className="editor-input" placeholder="Link title (e.g. Video tutorial)"
-                value={l.title} onChange={e => updateLink(i,{title:e.target.value})} />
-              <input className="editor-input" placeholder="URL"
-                value={l.url} onChange={e => updateLink(i,{url:e.target.value})} />
-              <button className="icon-btn" onClick={() => removeLink(i)}><Icon name="x" size={14}/></button>
+            <div key={i} style={{marginBottom:12}}>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 32px', gap:8}}>
+                <input className="editor-input" placeholder="Link title (e.g. Video tutorial)"
+                  value={l.title} onChange={e => updateLink(i,{title:e.target.value})} />
+                <input className="editor-input" placeholder="youtube.com/watch?v=…"
+                  value={l.url} onChange={e => updateLink(i,{url:e.target.value})} />
+                <button className="icon-btn" onClick={() => removeLink(i)}><Icon name="x" size={14}/></button>
+              </div>
+              {l.url && !/^[^\s.]+\.[^\s]{2,}/.test(l.url.replace(/^https?:\/\//, '')) && (
+                <div style={{fontSize:11, color:'var(--accent)', marginTop:3, fontFamily:'var(--f-mono)'}}>
+                  URL doesn't look valid — enter something like youtube.com/…
+                </div>
+              )}
             </div>
           ))}
           <button className="btn-ghost" onClick={addLink} style={{marginTop:4}}>

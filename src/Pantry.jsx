@@ -102,7 +102,10 @@ const PantryView = ({ pantry, setPantry, openDrawer }) => {
     else setPantry([item, ...pantry]);
     setEditing(null);
   };
-  const remove = (id) => setPantry(pantry.filter(x => x.id !== id));
+  const remove = (id) => {
+    if (!confirm('Remove this item from your pantry?')) return;
+    setPantry(pantry.filter(x => x.id !== id));
+  };
 
   // Sort: expired first, then by days-until-expiry
   const sorted = [...pantry].sort((a, b) => {
@@ -176,6 +179,7 @@ const PantryView = ({ pantry, setPantry, openDrawer }) => {
       {(editing === 'new' || editingItem) && (
         <div style={{marginBottom: 24}}>
           <PantryEditor
+            key={editing}
             item={editingItem}
             onSave={save}
             onCancel={() => setEditing(null)} />

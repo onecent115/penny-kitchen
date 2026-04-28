@@ -14,7 +14,7 @@ const Sidebar = ({ dishes, activeCategory, setActiveCategory, activeTags, toggle
       </div>
 
       <button className={`nav-item ${route?.view !== 'pantry' && activeCategory === null && activeTags.length === 0 ? 'active' : ''}`}
-        onClick={() => { setActiveCategory(null); }}>
+        onClick={goHome}>
         <span>All dishes</span>
         <span className="nav-count">{dishes.length}</span>
       </button>

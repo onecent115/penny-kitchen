@@ -84,6 +84,7 @@ const App = () => {
   const [drawerOpen,     setDrawerOpen]     = useState(false);
   const [tweaksOpen,     setTweaksOpen]     = useState(false);
   const [editMode,       setEditMode]       = useState(false);
+  const [saveError,      setSaveError]      = useState(null);
 
   // ── Auth listener ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -123,23 +124,27 @@ const App = () => {
   useEffect(() => {
     if (!uid || !dataLoaded) return;
     window.db.doc('users/' + uid + '/data/dishes').set({ items: dishes })
-      .catch(err => console.error('Failed to save dishes:', err));
+      .then(() => setSaveError(null))
+      .catch(err => { console.error('Failed to save dishes:', err); setSaveError('Changes couldn\'t be saved — check your connection.'); });
   }, [dishes, uid, dataLoaded]);
 
   useEffect(() => {
     if (!uid || !dataLoaded) return;
     window.db.doc('users/' + uid + '/data/pantry').set({ items: pantry })
-      .catch(err => console.error('Failed to save pantry:', err));
+      .then(() => setSaveError(null))
+      .catch(err => { console.error('Failed to save pantry:', err); setSaveError('Changes couldn\'t be saved — check your connection.'); });
   }, [pantry, uid, dataLoaded]);
 
   useEffect(() => {
     if (!uid || !dataLoaded) return;
     window.db.doc('users/' + uid + '/data/tweaks').set(tweaks)
-      .catch(err => console.error('Failed to save tweaks:', err));
+      .then(() => setSaveError(null))
+      .catch(err => { console.error('Failed to save tweaks:', err); setSaveError('Changes couldn\'t be saved — check your connection.'); });
   }, [tweaks, uid, dataLoaded]);
 
   useEffect(() => {
     if (!uid || !dataLoaded) return;
+    if (route.view === 'editor' || route.view === 'cook') return;
     window.db.doc('users/' + uid + '/data/route').set(route)
       .catch(err => console.error('Failed to save route:', err));
   }, [route, uid, dataLoaded]);
@@ -189,8 +194,19 @@ const App = () => {
   };
   const deleteDish = (id) => {
     if (!confirm('Delete this dish?')) return;
+    const dish = dishes.find(d => d.id === id);
+    if (dish?.heroPhoto) {
+      try { window.store.refFromURL(dish.heroPhoto).delete().catch(() => {}); } catch(e) {}
+    }
     setDishes(dishes.filter(d => d.id !== id));
     goHome();
+  };
+
+  const duplicateDish = (id) => {
+    const original = dishes.find(d => d.id === id);
+    if (!original) return;
+    const copy = { ...original, id: 'd' + Date.now(), name: 'Copy of ' + original.name, heroPhoto: null };
+    setRoute({view: 'editor', prefill: copy});
   };
 
   const pantrySoonCount = pantry.filter(x => {
@@ -207,7 +223,7 @@ const App = () => {
   };
 
   // ── Sign-out button (top-right corner) ────────────────────────────────────
-  const SignOutBtn = () => (
+  const SignOutBtn = () => route.view === 'cook' ? null : (
     <button
       onClick={() => window.auth.signOut()}
       title="Sign out"
@@ -251,6 +267,22 @@ const App = () => {
   // ── Main app ───────────────────────────────────────────────────────────────
   return (
     <div className="app">
+      {saveError && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10000,
+          background: '#B85C3C', color: '#fff',
+          padding: '10px 20px', display: 'flex',
+          justifyContent: 'space-between', alignItems: 'center',
+          fontFamily: 'var(--f-mono)', fontSize: 13,
+        }}>
+          {saveError}
+          <button onClick={() => setSaveError(null)}
+            style={{background:'none', border:'none', color:'#fff',
+              cursor:'pointer', fontSize: 20, lineHeight: 1, padding: '0 4px'}}>
+            ×
+          </button>
+        </div>
+      )}
       <SignOutBtn />
 
       {/* Persistent sidebar (desktop/iPad) */}
@@ -293,15 +325,16 @@ const App = () => {
             dish={currentDish}
             onBack={goHome}
             onEdit={() => setRoute({view: 'editor', id: currentDish.id})}
-            onCook={() => setRoute({view: 'cook', id: currentDish.id})}
+            onCook={(s) => setRoute({view: 'cook', id: currentDish.id, servings: s})}
             onDelete={() => deleteDish(currentDish.id)}
+            onDuplicate={() => duplicateDish(currentDish.id)}
           />
         )}
 
         {route.view === 'editor' && (
           <Editor
-            dish={route.id ? dishes.find(d => d.id === route.id) : null}
-            isNew={!route.id}
+            dish={route.id ? dishes.find(d => d.id === route.id) : (route.prefill || null)}
+            isNew={!route.id && !route.prefill}
             uid={uid}
             onSave={saveDish}
             onCancel={() => route.id
@@ -312,11 +345,15 @@ const App = () => {
       </main>
 
       {route.view === 'cook' && currentDish && (
-        <CookMode dish={currentDish} onExit={() => setRoute({view: 'detail', id: currentDish.id})} />
+        <CookMode dish={currentDish} servings={route.servings} onExit={() => setRoute({view: 'detail', id: currentDish.id})} />
       )}
 
       {tweaksOpen && (
-        <TweaksPanel tweaks={tweaks} setTweaks={setTweaks} onClose={() => setTweaksOpen(false)} />
+        <>
+          <div onClick={() => setTweaksOpen(false)}
+            style={{position:'fixed', inset:0, zIndex:99}} />
+          <TweaksPanel tweaks={tweaks} setTweaks={setTweaks} onClose={() => setTweaksOpen(false)} />
+        </>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 // Dish detail view + cook mode
-const DishDetail = ({ dish, onBack, onEdit, onCook, onDelete }) => {
+const DishDetail = ({ dish, onBack, onEdit, onCook, onDelete, onDuplicate }) => {
   const [checkedIngs, setCheckedIngs] = React.useState(new Set());
   const [doneSteps, setDoneSteps] = React.useState(new Set());
   const [servings, setServings] = React.useState(dish.servings || 1);
@@ -25,10 +25,13 @@ const DishDetail = ({ dish, onBack, onEdit, onCook, onDelete }) => {
           <Icon name="chev-left" size={16} /> Library
         </button>
         <div className="spacer" />
+        <button className="btn-ghost" onClick={onDuplicate}>
+          <Icon name="paste" size={16} /> Duplicate
+        </button>
         <button className="btn-ghost" onClick={onEdit}>
           <Icon name="edit" size={16} /> Edit
         </button>
-        <button className="btn-accent" onClick={onCook}>
+        <button className="btn-accent" onClick={() => onCook(servings)}>
           <Icon name="play" size={14} stroke="#fff" /> Cook mode
         </button>
       </div>
@@ -42,7 +45,7 @@ const DishDetail = ({ dish, onBack, onEdit, onCook, onDelete }) => {
       </div>
 
       <div className="detail-head">
-        <div className="page-kicker">{dish.category} · {dish.tags.slice(0,3).join(' · ')}</div>
+        <div className="page-kicker">{dish.category}{dish.tags.length > 0 ? ' · ' + dish.tags.slice(0,3).join(' · ') : ''}</div>
         <h1 className="detail-title">{dish.name}</h1>
       </div>
 
@@ -117,8 +120,9 @@ const DishDetail = ({ dish, onBack, onEdit, onCook, onDelete }) => {
             <div className="links-block">
               <div className="section-head" style={{fontSize:18, marginBottom:10}}>Links</div>
               {dish.links.map((l, i) => (
-                <a key={i} className="link-row" href={`https://${l.url}`} target="_blank" rel="noreferrer"
-                   onClick={e => e.preventDefault()}>
+                <a key={i} className="link-row"
+                   href={/^https?:\/\//i.test(l.url) ? l.url : `https://${l.url}`}
+                   target="_blank" rel="noreferrer">
                   <div className="link-icon">
                     <Icon name={l.url.includes('youtube') ? 'youtube' : 'link'} size={16} />
                   </div>
@@ -157,7 +161,7 @@ const DishDetail = ({ dish, onBack, onEdit, onCook, onDelete }) => {
             </div>
           ))}
           <div style={{marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--rule)'}}>
-            <button className="btn-accent" onClick={onCook} style={{width:'100%', justifyContent:'center'}}>
+            <button className="btn-accent" onClick={() => onCook(servings)} style={{width:'100%', justifyContent:'center'}}>
               <Icon name="play" size={14} stroke="#fff" /> Start cook mode
             </button>
           </div>
