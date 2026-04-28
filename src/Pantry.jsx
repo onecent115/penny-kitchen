@@ -30,8 +30,10 @@ const PantryRow = ({ item, onEdit, onRemove }) => {
         <div className="pantry-v">{window.fmtDate(item.expires)}</div>
       </div>
       <div className={`freshness-pill ${fClass}`}>{label}</div>
-      <button className="icon-btn" onClick={onEdit}><Icon name="edit" size={14}/></button>
-      <button className="icon-btn" onClick={onRemove}><Icon name="x" size={14}/></button>
+      <div className="pantry-actions">
+        <button className="icon-btn" onClick={onEdit}><Icon name="edit" size={14}/></button>
+        <button className="icon-btn" onClick={onRemove}><Icon name="x" size={14}/></button>
+      </div>
     </div>
   );
 };
