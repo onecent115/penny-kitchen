@@ -220,6 +220,7 @@ const App = () => {
     activeTags, toggleTag, goHome,
     onOpenTweaks: () => { setTweaksOpen(true); setDrawerOpen(false); },
     onOpenPantry: () => { setRoute({view: 'pantry'}); setDrawerOpen(false); },
+    onSignOut: () => window.auth.signOut(),
   };
 
   // ── Sign-out button (top-right corner) ────────────────────────────────────
@@ -227,6 +228,7 @@ const App = () => {
     <button
       onClick={() => window.auth.signOut()}
       title="Sign out"
+      className="signout-fixed"
       style={{
         position: 'fixed', top: 12, right: 12, zIndex: 9999,
         background: 'none', border: 'none', cursor: 'pointer',

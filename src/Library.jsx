@@ -1,5 +1,5 @@
 // Sidebar / library navigation
-const Sidebar = ({ dishes, activeCategory, setActiveCategory, activeTags, toggleTag, goHome, onOpenTweaks, onOpenPantry, route, pantrySoonCount }) => {
+const Sidebar = ({ dishes, activeCategory, setActiveCategory, activeTags, toggleTag, goHome, onOpenTweaks, onOpenPantry, route, pantrySoonCount, onSignOut }) => {
   const allTags = [...new Set(dishes.flatMap(d => d.tags))].sort();
   const categoryCounts = window.CATEGORIES.reduce((acc, c) => {
     acc[c] = dishes.filter(d => d.category === c).length;
@@ -58,6 +58,15 @@ const Sidebar = ({ dishes, activeCategory, setActiveCategory, activeTags, toggle
           </span>
         </button>
       </div>
+
+      {onSignOut && (
+        <div style={{marginTop: 12, padding: '0 8px'}}>
+          <button className="nav-item signout-sidebar" onClick={onSignOut}
+            style={{color:'var(--ink-4)', fontSize:13, fontFamily:'var(--f-mono)'}}>
+            Sign out
+          </button>
+        </div>
+      )}
     </>
   );
 };

@@ -152,6 +152,7 @@ input, textarea, select { font-family: inherit; color: inherit; }
 }
 @media (max-width: 900px) {
   .topbar .mobile-menu { display: flex; }
+  .signout-fixed { display: none; }
 }
 .search {
   flex: 1;
@@ -842,4 +843,22 @@ textarea.editor-input { min-height: 80px; resize: vertical; line-height: 1.5; }
   border: 1px solid var(--rule);
   border-radius: 14px;
   padding: 18px;
+}
+.pantry-editor-grid-top {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.pantry-editor-grid-bot {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+@media (max-width: 600px) {
+  .pantry-editor-grid-top,
+  .pantry-editor-grid-bot {
+    grid-template-columns: 1fr;
+  }
 }

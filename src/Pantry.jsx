@@ -46,7 +46,7 @@ const PantryEditor = ({ item, onSave, onCancel }) => {
   const u = (patch) => setP({...p, ...patch});
   return (
     <div className="pantry-editor">
-      <div style={{display:'grid', gridTemplateColumns:'2fr 1fr 1fr', gap:10, marginBottom:10}}>
+      <div className="pantry-editor-grid-top">
         <div>
           <span className="editor-label">Item</span>
           <input className="editor-input" placeholder="Olive oil, eggs, flour…"
@@ -64,7 +64,7 @@ const PantryEditor = ({ item, onSave, onCancel }) => {
           </select>
         </div>
       </div>
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 2fr', gap:10, marginBottom:10}}>
+      <div className="pantry-editor-grid-bot">
         <div>
           <span className="editor-label">Purchased <em style={{color:'var(--ink-4)',textTransform:'none'}}>(optional)</em></span>
           <input className="editor-input" type="date" value={p.purchased||''}
