@@ -363,7 +363,7 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
               <input value={ing.qty} placeholder="2" onChange={e => updateIng(i,{qty:e.target.value})} />
               <input value={ing.unit} placeholder="cups" onChange={e => updateIng(i,{unit:e.target.value})} />
               <input value={ing.item} placeholder="all-purpose flour" onChange={e => updateIng(i,{item:e.target.value})} />
-              <div style={{display:'flex', flexDirection:'column', gap:1}}>
+              <div className="reorder-btns" style={{display:'flex', flexDirection:'column', gap:1}}>
                 <button className="icon-btn" onClick={() => moveIng(i, -1)} disabled={i === 0}
                   style={{opacity: i === 0 ? 0.3 : 1, height:16, padding:0}}>
                   <span style={{display:'inline-block', transform:'rotate(180deg)', lineHeight:0}}><Icon name="chev-down" size={11}/></span>
@@ -405,7 +405,7 @@ const Editor = ({ dish, isNew, uid, onSave, onCancel }) => {
                   </span>
                 </div>
               </div>
-              <div style={{display:'flex', flexDirection:'column', gap:2}}>
+              <div className="reorder-btns" style={{display:'flex', flexDirection:'column', gap:2}}>
                 <button className="icon-btn" onClick={() => moveStep(i, -1)} disabled={i === 0}
                   style={{opacity: i === 0 ? 0.3 : 1}}>
                   <span style={{display:'inline-block', transform:'rotate(180deg)', lineHeight:0}}><Icon name="chev-down" size={14}/></span>
